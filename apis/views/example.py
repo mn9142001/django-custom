@@ -11,6 +11,7 @@ router = Router()
 @router.get('users/list', response_schema = UserReadSchema)
 async def index_page(request : Request):    
     users = await User.objects.async_all()
+    users = await users.async_prefetch_related('user_permissions')
     return await PaginateByPaginator(request).paginate(users)
 
 

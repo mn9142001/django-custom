@@ -1,6 +1,7 @@
+from typing import List
 from wsgi.schema import BaseModel
 from pydantic import validator
-
+from .permission import PermissionSchema
 from wsgi import exception
 from django.contrib.auth.hashers import make_password
 from user.models import User
@@ -38,4 +39,9 @@ class UserReadSchema(BaseModel):
     first_name : str
     last_name : str
     username : str
+    permissions : List[PermissionSchema]
     
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        obj.permissions = obj.user_permissions.all()
+        return super().model_validate(obj, *args, **kwargs)

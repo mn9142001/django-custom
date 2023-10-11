@@ -5,6 +5,7 @@ from .reg import compile_path
 from wsgi.schema import BaseModel
 from pydantic import ValidationError
 from wsgi import exception
+from wsgi.utils import is_async_callable
 
 ALL_METHODS = '__all__'
 
@@ -54,6 +55,10 @@ class Path:
             validator(**obj)
         except ValidationError as e:
             raise exception.ValidationError(e.errors())
+
+    async def call_view(self):
+        response = self.view(self.request)
+        return await response
         
     @staticmethod
     async def is_iterator(iterable_obj, raise_exception=True):
@@ -77,15 +82,14 @@ class Path:
         else:
             await self.validate_mapping(await self.request.body)
             await self._validate(self.validator, await self.request.body)
-    
-    
+     
     async def __call__(self, request : Request) -> Any:
         self.request = request
         
         if self.is_validate:
             await self.validate()
-            
-        response : Optional[dict | Response] = await self.view(request)
+    
+        response : Optional[dict | Response] = await self.call_view()
         
         await self.process_response(response)
 

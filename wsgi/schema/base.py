@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel as pydantic_model
 
 
-class BaseModel(BaseModel):
+class BaseModel(pydantic_model):
     
     async def validate_data(data : dict):
         return data
