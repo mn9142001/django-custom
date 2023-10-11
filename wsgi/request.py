@@ -23,6 +23,10 @@ class Request(RequestBodyDecoder, SendResponseMixin):
                 value.decode() if type(value) == bytes else value
             )
     
+    @property
+    def api_config(self):
+        return self.scope['app'].config
+    
     @cached_property
     def params(self) -> QueryParameter:
         return QueryParameter(self.query_string)
@@ -34,4 +38,11 @@ class Request(RequestBodyDecoder, SendResponseMixin):
     @property
     def dest(self):
         return self.path
+    
+    async def authenticate(self, auth_class = None):
         
+        if auth_class is None:
+            auth_class = self.api_config.DEFAULT_AUTHENTICATION_CLASSE
+        
+        auth_class = auth_class(self)
+        await auth_class.authenticate()        

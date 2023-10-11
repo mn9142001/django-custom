@@ -10,6 +10,10 @@ class ApiException(Exception):
         super().__init__(*args)
 
 
+class Http401(ApiException):
+    message = "Authentication is required."
+    status_code = status.HTTP_401_UNAUTHORIZED
+
 class Http404(ApiException):
     message = "Destination not found."
     status_code = status.HTTP_404_NOT_FOUND

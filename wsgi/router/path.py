@@ -5,17 +5,21 @@ from .reg import compile_path
 from wsgi.schema import BaseModel
 from pydantic import ValidationError
 from wsgi import exception
-from wsgi.utils import is_async_callable
 
 ALL_METHODS = '__all__'
 
 
 class Path:
-    
+    is_cbv : bool = False
     kwargs = {}
+    authentication_classe = None
+    
+    @property
+    def app(self):
+        return self.request.scope['app']
     
     def __init__(self, path : str, methods : str, callable, validator : BaseModel = None, 
-                 validate_many : bool = False, response_schema : BaseModel = None
+                 validate_many : bool = False, response_schema : BaseModel = None, **kwargs
                 ) -> None:
         self.validator = validator
         self.response_schema = response_schema
@@ -24,6 +28,9 @@ class Path:
         self.view = callable
         self.methods = methods
         self.path_regex = compile_path(self.path)
+        
+        for k,v in kwargs.items():
+            setattr(self, k, v)
         
     async def match_method(self, method) -> bool:
         return (self.methods == ALL_METHODS) or (method in self.methods)
@@ -56,7 +63,12 @@ class Path:
         except ValidationError as e:
             raise exception.ValidationError(e.errors())
 
+    async def authenticate(self):
+        if self.is_cbv: return
+        await self.request.authenticate(self.authentication_classe)
+        
     async def call_view(self):
+        await self.authenticate()
         response = self.view(self.request)
         return await response
         

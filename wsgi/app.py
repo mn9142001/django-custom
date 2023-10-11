@@ -4,14 +4,16 @@ from wsgi.request import Request
 from wsgi.router import Router
 from wsgi.middleware import BaseMiddleWare
 from wsgi.response import Response
+from wsgi.config import Config
 
 
 class App:
 
-    def __init__(self, middlewares : list[BaseMiddleWare]=[], urls = []) -> None:
+    def __init__(self, middlewares : list[BaseMiddleWare]=[], urls = [], config = Config()) -> None:
         self.router = Router()
         self.middlewares = middlewares
         self.include_urls(urls)
+        self.config = config
     
     def include_urls(self, urls):
         self.router.include_urls(urls)
@@ -37,5 +39,4 @@ class App:
         if type(message) == dict:
             return dict
         return {"detail" : message}
-
 

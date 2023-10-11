@@ -5,6 +5,8 @@ from wsgi.exception import Http405
 class View:
     
     request : Request
+    DEFAULT_AUTHENTICATION_CLASSE = False
+    DEFAULT_PERMISSIONS_CLASSES = None
     
     def __init__(self, request : Request) -> None:
         self.request = request
@@ -19,6 +21,8 @@ class View:
         return await view.call_method()
     
     async def call_method(self):
+        await self.authenticate()
+        
         method_name = self.request.method.lower()
         view = getattr(self, method_name, None)
         
@@ -28,4 +32,12 @@ class View:
         response = await view()
         return response
 
+    async def authenticate(self):
+        if self.DEFAULT_AUTHENTICATION_CLASSE is False: return
+        await self.request.authenticate(await self.get_authentication_classes())
+    
+    async def get_authentication_classes(self):
+        if self.DEFAULT_AUTHENTICATION_CLASSE is None:    
+            return self.request.api_config.DEFAULT_AUTHENTICATION_CLASSE
+        return self.DEFAULT_AUTHENTICATION_CLASSE
 

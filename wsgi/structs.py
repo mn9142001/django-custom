@@ -29,6 +29,7 @@ class QueryParameter:
 
 class Headers:
     def __init__(self, headers={}) -> None:
+        self.raw_headers = headers
         [setattr(self, key.decode(), value.decode()) for key, value in headers]
 
     @property
@@ -42,3 +43,6 @@ class Headers:
     @property
     def is_multipart(self):
         return self.content_type.startswith('multipart/form-data')
+    
+    async def __getitem__(self, key):
+        return getattr(self, key, None)

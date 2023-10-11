@@ -45,6 +45,7 @@ class Router:
         return self.route(route, methods, *args, **kwargs)
     
     def register_as_view(self, route, view, *args, **kwargs):
+        kwargs['is_cbv'] = True
         self.include_path(route, ALL_METHODS, view, *args, **kwargs)
             
     def include_urls(self, urls : list[Path]):

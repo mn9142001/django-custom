@@ -5,6 +5,7 @@ from wsgi.views.cbv import View
 from apis.schema import UserSchema, UserReadSchema
 from user.models import User
 from wsgi.paginate import PaginateByPaginator
+from wsgi.auth.jwt import JwtAuthentication
 
 router = Router()
 
@@ -34,7 +35,8 @@ async def index_page(request : Request):
 class HomeView(View):
     
     async def get(self):        
-        return "hello from cbv"    
+        data = {"token" : await JwtAuthentication.encode({"user_id": 1})}
+        return data
 
 
 router.register_as_view('cbv', HomeView.as_view())
