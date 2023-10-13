@@ -8,28 +8,28 @@ class PaginateByPaginator:
         self.max_paginate_by = max_paginate_by
         
     async def get_limit(self):
-        offset = await self.offset
-        limit = await self.limit
+        offset = self.offset
+        limit = self.limit
 
         if limit - offset > self.max_paginate_by:
             return offset + self.max_paginate_by
         return limit
         
     async def paginate(self, queryset):
-        offset = await self.offset
+        offset = self.offset
         limit = await self.get_limit()
         return queryset[offset:limit]
     
     @property
-    async def offset(self): 
+    def offset(self): 
         try:                
-            return int(await self.request.params.get('offset', 0))
+            return int(self.request.params.get('offset', 0))
         except ValueError as e:
             return 0
         
     @property
-    async def limit(self):
+    def limit(self):
         try:                
-            return int(await self.request.params.get('limit', await self.offset + self.paginate_py))
+            return int(self.request.params.get('limit', self.offset + self.paginate_py))
         except ValueError as e:
-            return await self.offset + self.paginate_py
+            return self.offset + self.paginate_py

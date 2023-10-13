@@ -20,9 +20,9 @@ async def index_page(request : Request):
 async def index_page(request : Request):
     """You can either return a full response object or the data directly"""
     
-    user = await UserSchema.create(await request.body)
+    user = await UserSchema.create(request.body)
     
-    data = {"message" : "Hello from post index page!", "query" : request.params.query, "body" : await request.body}
+    data = {"message" : "Hello from post index page!", "query" : request.params.query, "body" : request.body}
     
     response = Response(
         data,

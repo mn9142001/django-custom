@@ -4,12 +4,13 @@ from wsgi.request import Request
 from wsgi.router import Router
 from wsgi.middleware import BaseMiddleWare
 from wsgi.response import Response
-from wsgi.config import Config
-
+import tempfile
+from django.core.exceptions import RequestAborted
+from django.conf import settings
 
 class App:
 
-    def __init__(self, middlewares : list[BaseMiddleWare]=[], urls = [], config = Config()) -> None:
+    def __init__(self, middlewares : list[BaseMiddleWare]=[], urls = [], config = settings) -> None:
         self.router = Router()
         self.middlewares = middlewares
         self.include_urls(urls)
@@ -24,7 +25,7 @@ class App:
     async def __call__(self, scope: dict, rec, send, **kwargs: Any) -> Any:
         scope['app'] = self
         try:                
-            self.request = Request(scope, send=send, rec=rec)
+            self.request = Request(scope, send=send, rec=rec, body_file = await self.read_body(rec))
             response = self.router(self.request)
             await response
         except ApiException as e:
@@ -40,3 +41,23 @@ class App:
             return dict
         return {"detail" : message}
 
+    async def read_body(self, receive):
+        """Reads an HTTP body from an ASGI connection."""
+        # Use the tempfile that auto rolls-over to a disk file as it fills up.
+        body_file = tempfile.SpooledTemporaryFile(
+            max_size=settings.FILE_UPLOAD_MAX_MEMORY_SIZE, mode="w+b"
+        )
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                body_file.close()
+                # Early client disconnect.
+                raise RequestAborted()
+            # Add a body chunk from the message, if provided.
+            if "body" in message:
+                body_file.write(message["body"])
+            # Quit out if that's the end.
+            if not message.get("more_body", False):
+                break
+        body_file.seek(0)
+        return body_file
